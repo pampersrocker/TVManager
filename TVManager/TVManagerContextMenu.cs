@@ -16,11 +16,14 @@ namespace TVManager
 
             ToolStripMenuItem Toggle = new ToolStripMenuItem();
             Toggle.Text = "T&oggle";
-            Toggle.Click += new EventHandler(Toggle_Click);
+            Toggle.CheckOnClick = true;
+            var PowerStatus = CECUtility.Instance.Lib.GetDevicePowerStatus(CecSharp.CecLogicalAddress.Tv);
+            Toggle.Checked = PowerStatus == CecSharp.CecPowerStatus.InTransitionStandbyToOn || PowerStatus == CecSharp.CecPowerStatus.On;
+            Toggle.CheckedChanged += Toggle_CheckedChanged;
 
 
             ToolStripMenuItem Startup = new ToolStripMenuItem();
-            Startup.Text = "T&oggle";
+            Startup.Text = "R&un at Windows Startup";
             Startup.Checked = Utility.IsStartupSet();
             Startup.CheckOnClick = true;
             Startup.CheckedChanged += Startup_CheckedChanged; 
@@ -32,19 +35,31 @@ namespace TVManager
 
 
             Menu.Items.Add(Toggle);
+            Menu.Items.Add(Startup);
             Menu.Items.Add(Exit);
 
             return Menu;
         }
 
+        private static void Toggle_CheckedChanged(object sender, EventArgs e)
+        {
+            if (((ToolStripMenuItem)sender).Checked)
+            {
+
+                CECUtility.Instance.Lib.PowerOnDevices(CecSharp.CecLogicalAddress.Broadcast);
+                System.Threading.Thread.Sleep(3000);
+                CECUtility.Instance.Lib.SetActiveSource(CecSharp.CecDeviceType.Reserved);
+            }
+            else
+            {
+                CECUtility.Instance.Lib.StandbyDevices(CecSharp.CecLogicalAddress.Tv);
+            }
+            
+        }
+
         private static void Startup_CheckedChanged(object sender, EventArgs e)
         {
             Utility.SetStartup(((ToolStripMenuItem)sender).Checked);
-        }
-
-        private static void Toggle_Click(object sender, EventArgs e)
-        {
-
         }
 
         private static void Exit_Click(object sender, EventArgs e)

@@ -22,6 +22,8 @@ namespace TVManager
             TVManagerIcon.Icon = Resources.TrayIconDisabled;
             TVManagerIcon.Visible = true;
 
+            CECUtility.CreateUtility();
+
             TVManagerIcon.ContextMenuStrip = TVManagerContextMenu.CreateContextMenu();
 
             Application.Run();
