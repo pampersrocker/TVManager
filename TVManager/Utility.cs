@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Win32;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace TVManager
 {
@@ -29,5 +30,8 @@ namespace TVManager
 
             return rk.GetValue(Application.ProductName) != null;
         }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SharpYaml.Serialization;
 using System.IO;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace TVManager
 {
@@ -15,10 +16,24 @@ namespace TVManager
         public WDDM.ModeInfo[] ModeInfos;
     }
 
+    public struct WindowWatchlist
+    {
+        public string ClassName;
+        public string WindowName;
+    }
+
+    public enum ModeType
+    {
+        Default,
+        TVMode
+    }
+
     public struct ConfigData
     {
         public DisplayConfig DefaultDisplay;
         public DisplayConfig TVDisplay;
+        public ModeType Mode;
+        public WindowWatchlist[] WindowWatchList;
     }
 
     public class Config
@@ -71,6 +86,24 @@ namespace TVManager
         public void SetTVConfig(DisplayConfig TVConfig)
         {
             ConfigData.TVDisplay = TVConfig;
+            WriteConfig();
+        }
+
+        public bool IsProcessInWatchlistRunning()
+        {
+            foreach (WindowWatchlist Watchlist in ConfigData.WindowWatchList)
+            {
+                if (!Utility.FindWindow(Watchlist.ClassName, Watchlist.WindowName).Equals(IntPtr.Zero))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void SetMode(ModeType Mode)
+        {
+            ConfigData.Mode = Mode;
             WriteConfig();
         }
 

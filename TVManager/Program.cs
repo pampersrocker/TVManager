@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using TVManager.Properties;
-using SharpYaml.Serialization;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using TVManager.WDDM;
 
 namespace TVManager
 {
@@ -15,6 +12,7 @@ namespace TVManager
     static class Program
     {
         static NotifyIcon TVManagerIcon;
+        static volatile bool Shutdown = false;
 
         /// <summary>
         /// The main entry point for the application.
@@ -40,9 +38,32 @@ namespace TVManager
                 TVManagerIcon.ContextMenuStrip = TVManagerContextMenu.CreateContextMenu();
 
 
+                Thread PollThread = new Thread(new ThreadStart(() =>
+                {
+                    while (!Shutdown)
+                    {
+
+                        bool IsInTVMode = Config.Instance.ConfigData.Mode == ModeType.TVMode;
+                        bool IsWatchlistProcessRunning = Config.Instance.IsProcessInWatchlistRunning();
+                        if(IsInTVMode != IsWatchlistProcessRunning)
+                        {
+                            if (IsWatchlistProcessRunning)
+                            {
+                                SetMode(ModeType.TVMode);
+                            }
+                            else
+                            {
+                                SetMode(ModeType.Default);
+                            }
+                        }
+                        Thread.Sleep(1000);
+                    }
+                }));
+                PollThread.Start();
+                Application.ApplicationExit += Application_ApplicationExit;
                 Application.Run();
 
-                TVManagerIcon.Visible = false;
+
             }
             catch (Exception Exc)
             {
@@ -58,6 +79,12 @@ namespace TVManager
 
         }
 
+        private static void Application_ApplicationExit(object sender, EventArgs e)
+        {
+            TVManagerIcon.Visible = false;
+            Shutdown = true;
+        }
+
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             MessageBox.Show(e.ExceptionObject.ToString());
@@ -65,7 +92,7 @@ namespace TVManager
 
         private static void TVManagerIcon_DoubleClick(object sender, EventArgs e)
         {
-            TVManagerContextMenu.Toggle.Checked = !TVManagerContextMenu.Toggle.Checked;
+            SetMode(Config.Instance.ConfigData.Mode == ModeType.Default ? ModeType.TVMode : ModeType.Default);
         }
 
         public static void OnActiveChanged(bool Active)
@@ -78,6 +105,42 @@ namespace TVManager
             {
                 TVManagerIcon.Icon = Resources.TrayIconDisabled;
             }
+        }
+
+        public static void SetMode(ModeType Mode)
+        {
+            Config.Instance.SetMode(Mode);
+            TVManagerContextMenu.Toggle.Checked = Mode == ModeType.TVMode;
+
+            if (Mode == ModeType.TVMode)
+            {
+                if (Config.Instance.ConfigData.TVDisplay.PathInfos != null &&
+                    Config.Instance.ConfigData.TVDisplay.ModeInfos != null)
+                {
+
+                    CCD.SetDisplayConfig(
+                        SetDisplayConfigFlags.Apply | SetDisplayConfigFlags.UseSuppliedDisplayConfig | SetDisplayConfigFlags.SaveToDatabase, 
+                        Config.Instance.ConfigData.TVDisplay.PathInfos, 
+                        Config.Instance.ConfigData.TVDisplay.ModeInfos);
+                }
+                CECUtility.Instance.Lib.PowerOnDevices(CecSharp.CecLogicalAddress.Tv);
+                System.Threading.Thread.Sleep(3000);
+                CECUtility.Instance.Lib.SetActiveSource(CecSharp.CecDeviceType.Reserved);
+            }
+            else
+            {
+                if (Config.Instance.ConfigData.DefaultDisplay.PathInfos != null &&
+                    Config.Instance.ConfigData.DefaultDisplay.ModeInfos != null)
+                {
+                    CCD.SetDisplayConfig(
+                        SetDisplayConfigFlags.Apply | SetDisplayConfigFlags.UseSuppliedDisplayConfig | SetDisplayConfigFlags.SaveToDatabase,
+                        Config.Instance.ConfigData.DefaultDisplay.PathInfos,
+                        Config.Instance.ConfigData.DefaultDisplay.ModeInfos);
+                }
+                CECUtility.Instance.Lib.StandbyDevices(CecSharp.CecLogicalAddress.Tv);
+            }
+
+            OnActiveChanged(Mode == ModeType.TVMode);
         }
     }
 }
