@@ -72,6 +72,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>TrayIconEnabled.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibCecSharp">
       <HintPath>ThirdParty\LibCecSharp.dll</HintPath>
@@ -129,6 +132,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\TrayIconEnabled.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TrayIconEnabled.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
