@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CecSharp;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace TVManager
 {
@@ -47,7 +48,22 @@ namespace TVManager
 
             if (Adapters.Length > 0)
             {
-                Utility.Lib.Open(Adapters[0].ComPort, 10000);
+                int RetryCount = 0;
+                while(!Utility.Lib.Open(Adapters[0].ComPort, 10000))
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    RetryCount++;
+                    if (RetryCount > 10)
+                    {
+                        MessageBox.Show("Could not connect after 10 retries");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Could not find Adapters");
+
             }
         }
 
