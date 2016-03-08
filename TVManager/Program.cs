@@ -124,8 +124,23 @@ namespace TVManager
                         Config.Instance.ConfigData.TVDisplay.ModeInfos);
                 }
                 CECUtility.Instance.Lib.PowerOnDevices(CecSharp.CecLogicalAddress.Tv);
-                System.Threading.Thread.Sleep(3000);
+                Thread.Sleep(3000);
                 CECUtility.Instance.Lib.SetActiveSource(CecSharp.CecDeviceType.Reserved);
+
+                if (Config.Instance.ConfigData.TVModeCommandLineCommands != null)
+                {
+                    foreach (string Command in Config.Instance.ConfigData.TVModeCommandLineCommands)
+                    {
+                        System.Diagnostics.Process Process = new System.Diagnostics.Process();
+                        System.Diagnostics.ProcessStartInfo StartInfo = new System.Diagnostics.ProcessStartInfo();
+                        StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                        StartInfo.FileName = "cmd.exe";
+                        StartInfo.Arguments = "/C " + Command;
+                        Process.StartInfo = StartInfo;
+                        Process.Start();
+                    }
+                }
+                
             }
             else
             {
@@ -138,6 +153,21 @@ namespace TVManager
                         Config.Instance.ConfigData.DefaultDisplay.ModeInfos);
                 }
                 CECUtility.Instance.Lib.StandbyDevices(CecSharp.CecLogicalAddress.Tv);
+
+                if (Config.Instance.ConfigData.DefaultModeCommandLineCommands != null)
+                {
+                    foreach (string Command in Config.Instance.ConfigData.DefaultModeCommandLineCommands)
+                    {
+                        System.Diagnostics.Process Process = new System.Diagnostics.Process();
+                        System.Diagnostics.ProcessStartInfo StartInfo = new System.Diagnostics.ProcessStartInfo();
+                        StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                        StartInfo.FileName = "cmd.exe";
+                        StartInfo.Arguments = "/C " + Command;
+                        Process.StartInfo = StartInfo;
+                        Process.Start();
+                    }
+                }
+
             }
 
             OnActiveChanged(Mode == ModeType.TVMode);

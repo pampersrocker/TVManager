@@ -34,6 +34,8 @@ namespace TVManager
         public DisplayConfig TVDisplay;
         public ModeType Mode;
         public WindowWatchlist[] WindowWatchList;
+        public string[] TVModeCommandLineCommands;
+        public string[] DefaultModeCommandLineCommands;
     }
 
     public class Config
